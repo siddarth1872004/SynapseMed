@@ -1,0 +1,32 @@
+# Python virtual environment and cache
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node / JS dependencies and build outputs
+node_modules/
+dist/
+build/
+.eslintcache
+.vite/
+
+# Application Uploads & DB
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/vector_db/*
+!backend/vector_db/.gitkeep
+
+# IDEs & System files
+.vscode/
+.idea/
+.DS_Store
+*.log
+jwt_secret.txt

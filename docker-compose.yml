@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      # Maps only to the host's localhost (127.0.0.1) for secure access
+      - "127.0.0.1:8000:8000"
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-}
+      - UPLOAD_DIR=/app/uploads
+      - VECTOR_DB_DIR=/app/vector_db
+    volumes:
+      - backend-uploads:/app/uploads
+      - backend-vector-db:/app/vector_db
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      # Maps only to the host's localhost (127.0.0.1) for secure development
+      - "127.0.0.1:5173:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  backend-uploads:
+  backend-vector-db:
