@@ -1,4 +1,4 @@
-# SynapseMed-AI: Multi-Modal Diagnostic & Research Copilot
+# SynapseMed: Multi-Modal Diagnostic & Research Copilot
 
 A stateful, multi-agent medical copilot built to ingest scanned patient clinical history documents and medical imaging (MRIs/X-rays), analyze findings using a Vision Transformer/U-Net, query localized clinical guidelines via RAG with cross-encoder reranking, and synthesize a Pydantic-validated diagnostic summary report.
 
