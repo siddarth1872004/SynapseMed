@@ -59,7 +59,7 @@ The system uses a stateful agent orchestration pattern directed by a **Superviso
 Ensure Docker and Docker Compose are installed, then execute:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 - **Frontend UI**: Open `http://localhost:5173`
