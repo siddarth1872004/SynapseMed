@@ -1,5 +1,16 @@
 # SynapseMed: Multi-Modal Diagnostic & Research Copilot
 
+<div align="center">
+
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.3-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
+[![Transformers](https://img.shields.io/badge/🤗_Transformers-4.42-FFD21E?style=for-the-badge)](https://huggingface.co/docs/transformers)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-vector_store-FF6F00?style=for-the-badge)](https://www.trychroma.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
+
+</div>
+
 A stateful, multi-agent medical copilot built to ingest scanned patient clinical history documents and medical imaging (MRIs/X-rays), analyze findings using a Vision Transformer/U-Net, query localized clinical guidelines via RAG with cross-encoder reranking, and synthesize a Pydantic-validated diagnostic summary report.
 
 ---
