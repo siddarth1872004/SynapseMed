@@ -14,6 +14,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download the Hugging Face model and processor to cache it in the Docker image
+RUN python -c "from transformers import AutoImageProcessor, AutoModelForImageClassification; AutoImageProcessor.from_pretrained('Hemg/Brain-Tumor-Classification'); AutoModelForImageClassification.from_pretrained('Hemg/Brain-Tumor-Classification')"
+
 # Copy backend app files
 COPY . .
 

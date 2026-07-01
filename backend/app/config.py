@@ -8,18 +8,22 @@ from pydantic_settings import BaseSettings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("config")
 
+# Base directory of the backend package (works regardless of deployment location,
+# e.g. Docker's /app or a developer's local checkout).
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 class Settings(BaseSettings):
     # API Configurations
     API_V1_STR: str = "/api"
     PROJECT_NAME: str = "Multi-Modal Medical Diagnostic & Research Copilot"
-    
+
     # Secret Key for sessions/tokens
     # Resolves: Environment Variable -> Local File -> Ephemeral Random Key (with warning)
     JWT_SECRET_KEY: str = ""
-    
+
     # Path & File System Settings
-    UPLOAD_DIR: Path = Path("/home/siddarth/projects/Resume/multimodal_medical_copilot/backend/uploads")
-    VECTOR_DB_DIR: Path = Path("/home/siddarth/projects/Resume/multimodal_medical_copilot/backend/vector_db")
+    UPLOAD_DIR: Path = BASE_DIR / "uploads"
+    VECTOR_DB_DIR: Path = BASE_DIR / "vector_db"
     MAX_FILE_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB limit
     ALLOWED_IMAGE_EXTENSIONS: set[str] = {"png", "jpg", "jpeg", "tiff", "tif"}
     ALLOWED_DOC_EXTENSIONS: set[str] = {"pdf", "txt", "docx"}
@@ -54,7 +58,7 @@ if not settings.JWT_SECRET_KEY:
         settings.JWT_SECRET_KEY = env_secret
     else:
         # Check for local file
-        secret_file = Path("/home/siddarth/projects/Resume/multimodal_medical_copilot/backend/jwt_secret.txt")
+        secret_file = BASE_DIR / "jwt_secret.txt"
         if secret_file.exists():
             settings.JWT_SECRET_KEY = secret_file.read_text().strip()
         else:

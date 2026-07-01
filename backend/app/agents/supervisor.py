@@ -1,7 +1,7 @@
 import time
 import logging
 from typing import Dict, Any, Generator, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.schemas import DiagnosticReport, PatientMetadata, DocumentExtraction, VisionFindings, RetrievalAnalysis
 from app.agents.ingestion import run_document_ingestion
@@ -32,7 +32,7 @@ class SupervisorOrchestrator:
         }
 
     def log(self, message: str) -> Dict[str, Any]:
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         log_entry = f"[{timestamp}] {message}"
         self.state["logs"].append(log_entry)
         logger.info(log_entry)
@@ -106,7 +106,7 @@ class SupervisorOrchestrator:
         self.state["next_step"] = "COMPLETED"
         
         yield self.log("Supervisor: Diagnostic report compiled and Pydantic schema validated.")
-        yield {"step": "COMPLETED", "report": report.dict(), "timestamp": datetime.utcnow().isoformat()}
+        yield {"step": "COMPLETED", "report": report.model_dump(), "timestamp": datetime.now(timezone.utc).isoformat()}
 
     def synthesize_report(self) -> DiagnosticReport:
         """
@@ -192,5 +192,5 @@ class SupervisorOrchestrator:
             synthesized_diagnostic_summary=summary_text,
             recommended_follow_ups=actions,
             grading_level=grading,
-            generated_at=datetime.utcnow().isoformat()
+            generated_at=datetime.now(timezone.utc).isoformat()
         )

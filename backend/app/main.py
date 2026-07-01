@@ -1,4 +1,3 @@
-import os
 import json
 import logging
 from typing import Optional
@@ -6,10 +5,9 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status, Requ
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import ValidationError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from app.config import settings
+from app.config import settings, BASE_DIR
 from app.utils.security import secure_save_file
 from app.agents.supervisor import SupervisorOrchestrator
 
@@ -32,7 +30,7 @@ MAX_REQUESTS_PER_WINDOW = 60
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Prune expired entries
     IP_REQUESTS[client_ip] = [
@@ -83,7 +81,7 @@ def read_root():
     return {
         "status": "online",
         "service": settings.PROJECT_NAME,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 # 4. Stream endpoint: uploads files and initiates supervisor workflow
@@ -147,6 +145,6 @@ async def run_copilot(
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 # Serve frontend static assets if built
-frontend_dist = "/home/siddarth/projects/Resume/multimodal_medical_copilot/frontend/dist"
-if os.path.exists(frontend_dist):
+frontend_dist = BASE_DIR.parent / "frontend" / "dist"
+if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
