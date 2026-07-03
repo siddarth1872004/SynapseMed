@@ -1,6 +1,6 @@
 # SynapseMed -- Stateful Multi-Agent Clinical Diagnostic Platform
 
-SynapseMed is a stateful multi-agent medical diagnostic and clinical decision support system. It ingests clinical notes via OCR, processes medical imaging (MRI/CT scans) via Vision Transformer & U-Net pipelines, queries evidence-based medical guidelines through RAG (Retrieval-Augmented Generation), and synthesizes validated Pydantic diagnostic reports.
+SynapseMed is a stateful multi-agent medical diagnostic and clinical decision support system. It ingests clinical notes via OCR, processes medical imaging (MRI/CT scans) via Vision Transformer and U-Net pipelines, queries evidence-based medical guidelines through RAG (Retrieval-Augmented Generation), and synthesizes validated Pydantic diagnostic reports.
 
 ---
 
@@ -9,43 +9,54 @@ SynapseMed is a stateful multi-agent medical diagnostic and clinical decision su
 ```mermaid
 graph TB
     subgraph INPUTS["Clinical Inputs"]
-        NOTE[Clinical Notes PDF/Image]
-        MRI[Medical Imaging MRI/CT]
+        NOTE["Clinical Notes PDF and Images"]
+        MRI["Medical Imaging MRI and CT"]
     end
 
-    subgraph INGESTION["Agent 1: Ingestion & OCR"]
-        TESS[Tesseract OCR Engine]
-        TEXT[Structured Note Extractor]
+    subgraph INGESTION["Agent 1: Ingestion and OCR"]
+        TESS["Tesseract OCR Engine"]
+        TEXT["Structured Note Extractor"]
     end
 
     subgraph VISION["Agent 2: Vision Analysis"]
-        VIT[Vision Transformer ViT]
-        UNET[U-Net Segmentation Engine]
-        FEAT[Imaging Feature Map]
+        VIT["Vision Transformer ViT"]
+        UNET["U-Net Segmentation Engine"]
+        FEAT["Imaging Feature Map"]
     end
 
     subgraph RAG["Agent 3: Clinical Guideline RAG"]
-        FAISS[FAISS Vector Store]
-        MED[Medical Guidelines DB]
-        EMB[SentenceTransformer Embeddings]
+        FAISS["FAISS Vector Store"]
+        MED["Medical Guidelines DB"]
+        EMB["SentenceTransformer Embeddings"]
     end
 
-    subgraph SUPERVISOR["Agent 4: Supervisor & Synthesizer"]
-        GRAPH[LangGraph Stateful Supervisor]
-        PYD[Pydantic Clinical Report Generator]
-        VAL[Diagnostic Validation Guard]
+    subgraph SUPERVISOR["Agent 4: Supervisor and Synthesizer"]
+        GRAPH["LangGraph Stateful Supervisor"]
+        PYD["Pydantic Clinical Report Generator"]
+        VAL["Diagnostic Validation Guard"]
     end
 
     subgraph OUTPUT["Diagnostic Output"]
-        REPORT[Structured Pydantic Diagnostic Report JSON/PDF]
+        REPORT["Structured Pydantic Diagnostic Report JSON and PDF"]
     end
 
-    NOTE --> TESS --> TEXT
-    MRI --> VIT & UNET --> FEAT
-    TEXT & FEAT --> GRAPH
-    GRAPH -->|query context| EMB --> FAISS & MED --> RAG
+    NOTE --> TESS
+    TESS --> TEXT
+    MRI --> VIT
+    MRI --> UNET
+    VIT --> FEAT
+    UNET --> FEAT
+    TEXT --> GRAPH
+    FEAT --> GRAPH
+    GRAPH -->|query context| EMB
+    EMB --> FAISS
+    EMB --> MED
+    FAISS --> RAG
+    MED --> RAG
     RAG -->|guideline context| GRAPH
-    GRAPH --> PYD --> VAL --> REPORT
+    GRAPH --> PYD
+    PYD --> VAL
+    VAL --> REPORT
 
     style INPUTS fill:#18181b,stroke:#a1a1aa,color:#fff
     style INGESTION fill:#18181b,stroke:#ffffff,color:#fff
@@ -68,15 +79,15 @@ sequenceDiagram
     participant Supervisor as Supervisor Agent (LangGraph)
 
     Physician->>Supervisor: Upload Clinical Note + MRI Scan
-    par Parallel Ingestion & Vision Analysis
-        Supervisor->>Ingestion: Extract & parse clinical text
+    par Parallel Ingestion and Vision Analysis
+        Supervisor->>Ingestion: Extract and parse clinical text
         Ingestion-->>Supervisor: Returns structured clinical entities
     and
-        Supervisor->>Vision: Segment & analyze MRI scan features
-        Vision-->>Supervisor: Returns bounding boxes & lesion classifications
+        Supervisor->>Vision: Segment and analyze MRI scan features
+        Vision-->>Supervisor: Returns bounding boxes and lesion classifications
     end
     Supervisor->>Retrieval: Query clinical guidelines (FAISS vector search)
-    Retrieval-->>Supervisor: Relevant clinical protocols & risk scores
+    Retrieval-->>Supervisor: Relevant clinical protocols and risk scores
     Supervisor->>Supervisor: Synthesize Pydantic diagnostic schema
     Supervisor-->>Physician: Render Pydantic Diagnostic Report
 ```
