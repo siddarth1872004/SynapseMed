@@ -1,108 +1,164 @@
-# SynapseMed: Multi-Modal Diagnostic & Research Copilot
+# SynapseMed -- Stateful Multi-Agent Clinical Diagnostic Platform
 
-<div align="center">
-
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.3-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
-[![Transformers](https://img.shields.io/badge/🤗_Transformers-4.42-FFD21E?style=for-the-badge)](https://huggingface.co/docs/transformers)
-[![ChromaDB](https://img.shields.io/badge/ChromaDB-vector_store-FF6F00?style=for-the-badge)](https://www.trychroma.com)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
-
-</div>
-
-A stateful, multi-agent medical copilot built to ingest scanned patient clinical history documents and medical imaging (MRIs/X-rays), analyze findings using a Vision Transformer/U-Net, query localized clinical guidelines via RAG with cross-encoder reranking, and synthesize a Pydantic-validated diagnostic summary report.
+SynapseMed is a stateful multi-agent medical diagnostic and clinical decision support system. It ingests clinical notes via OCR, processes medical imaging (MRI/CT scans) via Vision Transformer & U-Net pipelines, queries evidence-based medical guidelines through RAG (Retrieval-Augmented Generation), and synthesizes validated Pydantic diagnostic reports.
 
 ---
 
-## Architecture Overview
+## Architecture Topology
 
-The system uses a stateful agent orchestration pattern directed by a **Supervisor Agent**:
+```mermaid
+graph TB
+    subgraph INPUTS["Clinical Inputs"]
+        NOTE[Clinical Notes PDF/Image]
+        MRI[Medical Imaging MRI/CT]
+    end
 
+    subgraph INGESTION["Agent 1: Ingestion & OCR"]
+        TESS[Tesseract OCR Engine]
+        TEXT[Structured Note Extractor]
+    end
+
+    subgraph VISION["Agent 2: Vision Analysis"]
+        VIT[Vision Transformer ViT]
+        UNET[U-Net Segmentation Engine]
+        FEAT[Imaging Feature Map]
+    end
+
+    subgraph RAG["Agent 3: Clinical Guideline RAG"]
+        FAISS[FAISS Vector Store]
+        MED[Medical Guidelines DB]
+        EMB[SentenceTransformer Embeddings]
+    end
+
+    subgraph SUPERVISOR["Agent 4: Supervisor & Synthesizer"]
+        GRAPH[LangGraph Stateful Supervisor]
+        PYD[Pydantic Clinical Report Generator]
+        VAL[Diagnostic Validation Guard]
+    end
+
+    subgraph OUTPUT["Diagnostic Output"]
+        REPORT[Structured Pydantic Diagnostic Report JSON/PDF]
+    end
+
+    NOTE --> TESS --> TEXT
+    MRI --> VIT & UNET --> FEAT
+    TEXT & FEAT --> GRAPH
+    GRAPH -->|query context| EMB --> FAISS & MED --> RAG
+    RAG -->|guideline context| GRAPH
+    GRAPH --> PYD --> VAL --> REPORT
+
+    style INPUTS fill:#18181b,stroke:#a1a1aa,color:#fff
+    style INGESTION fill:#18181b,stroke:#ffffff,color:#fff
+    style VISION fill:#18181b,stroke:#e4e4e7,color:#fff
+    style RAG fill:#18181b,stroke:#d4d4d8,color:#fff
+    style SUPERVISOR fill:#000000,stroke:#ffffff,color:#fff
+    style OUTPUT fill:#18181b,stroke:#a1a1aa,color:#fff
 ```
-                  ┌──────────────────────┐
-                  │   Supervisor Agent   │
-                  └──────────┬───────────┘
-                             │
-            ┌────────────────┼────────────────┐
-            ▼                ▼                ▼
-   ┌────────────────┐┌───────────────┐┌───────────────┐
-   │Document Ingest ││Vision-Inference││ RAG Retrieval │
-   │   (OCR/PDF)    ││ (ViT/U-Net)   ││(FAISS/Chroma) │
-   └────────────────┘└───────────────┘└───────────────┘
-```
-
-1. **Supervisor Routing (LangGraph style)**: Manages state, sequences workers dynamically based on the uploaded inputs, and aggregates JSON outputs.
-2. **Document Ingestion Agent**: Uses `pytesseract` and `pdf2image` to perform optical character recognition (OCR) on clinical notes, with a fallback text-parser if system libraries are not present.
-3. **Vision Inference Agent**: Employs a Vision Transformer (ViT) & U-Net architecture (via PyTorch) to segment/classify scans (Glioma, Meningioma, Pituitary Adenoma, or Normal) and calculate lesion sizing, with a pixel density analysis fallback.
-4. **Retrieval Agent**: Matches findings against a local medical guidelines database using vector embeddings (`sentence-transformers`) and a Cross-Encoder for reranking to prevent hallucinations.
-5. **FastAPI Streaming Endpoint**: Provides execution progress logging and final report streaming using Server-Sent Events (SSE).
 
 ---
 
-## Tech Stack
+## Multi-Agent Workflow Sequence Diagram
 
-- **Backend**: FastAPI, Uvicorn, Pydantic (v2), PyTorch, ChromaDB/FAISS, Sentence-Transformers, PyTesseract, PDF2Image.
-- **Frontend**: React (Vite), TypeScript, custom premium dark-mode Vanilla CSS design system.
-- **Deployment**: Docker, Docker Compose.
+```mermaid
+sequenceDiagram
+    participant Physician as Physician / User Interface
+    participant Ingestion as Ingestion Agent (OCR)
+    participant Vision as Vision Agent (ViT/U-Net)
+    participant Retrieval as Retrieval Agent (RAG)
+    participant Supervisor as Supervisor Agent (LangGraph)
+
+    Physician->>Supervisor: Upload Clinical Note + MRI Scan
+    par Parallel Ingestion & Vision Analysis
+        Supervisor->>Ingestion: Extract & parse clinical text
+        Ingestion-->>Supervisor: Returns structured clinical entities
+    and
+        Supervisor->>Vision: Segment & analyze MRI scan features
+        Vision-->>Supervisor: Returns bounding boxes & lesion classifications
+    end
+    Supervisor->>Retrieval: Query clinical guidelines (FAISS vector search)
+    Retrieval-->>Supervisor: Relevant clinical protocols & risk scores
+    Supervisor->>Supervisor: Synthesize Pydantic diagnostic schema
+    Supervisor-->>Physician: Render Pydantic Diagnostic Report
+```
 
 ---
 
-## Security & Protection Features
+## Agent System Overview
 
-- **Input Validation**: Hard constraints on model fields using Pydantic schemas.
-- **Upload Guards**:
-  - Max file size limits enforced at 10 MB.
-  - Strict path traversal guards using `os.path.basename` and absolute path verification to confirm files remain inside the sandbox folder.
-  - Magic byte validation to prevent MIME type spoofing (blocks scripts disguised as images or documents).
-  - Restricted directory execution permissions (chmod 600 for files, chmod 750 for folders).
-- **CORS Allowlist**: Restricted to trusted development origins (no wildcard `*` allowed).
-- **Rate Limiting**: Custom middleware implements in-memory IP rate limiting to mitigate DoS threats.
-- **Security Headers**: Standard headers injected (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, strict Content Security Policy).
-- **Secrets Management**: Ephemeral secret fallback generator prevents hardcoded credential exposure.
+| Agent | Responsibility | Underlying Technology |
+|-------|----------------|----------------------|
+| **Ingestion Agent** | OCR text extraction from clinical notes, vitals parsing, lab results formatting | Tesseract OCR, PyPDF2, Regex NLP |
+| **Vision Agent** | MRI/CT scan feature extraction, tumor/lesion segmentation, heatmap visualization | PyTorch, Vision Transformer (ViT), U-Net |
+| **Retrieval Agent** | Semantic search over clinical practice guidelines & drug interaction databases | LangChain, FAISS Vector DB, HuggingFace Embeddings |
+| **Supervisor Agent** | Multi-agent coordination, state management, Pydantic report synthesis | LangGraph, Pydantic v2, FastAPI |
 
 ---
 
-## Getting Started
+## Directory Structure
 
-### Option A: Running with Docker Compose
-
-Ensure Docker and Docker Compose are installed, then execute:
-
-```bash
-docker compose up --build
 ```
-
-- **Frontend UI**: Open `http://localhost:5173`
-- **FastAPI backend**: Served at `http://localhost:8000`
+SynapseMed/
+|-- docker-compose.yml          # Multi-container orchestration (Backend + Frontend + Vector DB)
+|-- README.md                   # ASCII Architecture & User Documentation
+|-- backend/
+|   |-- Dockerfile              # PyTorch + Tesseract OCR FastAPI container
+|   |-- requirements.txt        # FastAPI, LangGraph, PyTorch, FAISS dependencies
+|   |-- uploads/                # Temporary file upload storage
+|   |-- vector_db/              # FAISS vector database indices
+|   `-- app/
+|       |-- __init__.py
+|       |-- main.py             # FastAPI entry point & WebSocket endpoints
+|       |-- config.py           # Environment variables & model thresholds
+|       |-- schemas.py          # Pydantic v2 diagnostic schemas
+|       |-- agents/
+|       |   |-- __init__.py
+|       |   |-- ingestion.py    # OCR & note parsing agent
+|       |   |-- vision.py       # ViT & U-Net MRI scan agent
+|       |   |-- retrieval.py    # RAG guideline search agent
+|       |   `-- supervisor.py   # LangGraph multi-agent coordinator
+|       `-- utils/              # Helper functions & image preprocessors
+`-- frontend/                   # Web User Interface
+```
 
 ---
 
-### Option B: Running Locally (Without Docker)
+## Quick Start Guide
 
-#### 1. Backend Setup
-Create a Python virtual environment and install dependencies:
+### Prerequisites
+- Docker & Docker Compose **OR** Python 3.10+ with PyTorch and Tesseract OCR installed.
 
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+### Running with Docker Compose
 
-Start the FastAPI application. By default, it binds strictly to `127.0.0.1` for local safety:
+1. **Clone Repository**:
+   ```bash
+   git clone https://github.com/siddarth1872004/SynapseMed.git
+   cd SynapseMed
+   ```
 
-```bash
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
+2. **Launch Services**:
+   ```bash
+   docker-compose up --build
+   ```
 
-#### 2. Frontend Setup
-Make sure Node.js (v18+) is installed:
+3. **Access Application**:
+   - Backend API Docs: `http://localhost:8000/docs`
+   - Frontend Dashboard: `http://localhost:3000`
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Local Development Setup
 
-Open `http://localhost:5173` in your browser.
+1. **Navigate to Backend**:
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   ```
+
+2. **Start FastAPI Application**:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+---
+
+## License
+
+Distributed under the **MIT License**. See `LICENSE` for details.
