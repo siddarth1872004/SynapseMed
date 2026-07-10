@@ -84,6 +84,16 @@ def read_root():
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "service": settings.PROJECT_NAME,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
 # 4. Stream endpoint: uploads files and initiates supervisor workflow
 @app.post("/api/copilot/run")
 async def run_copilot(
